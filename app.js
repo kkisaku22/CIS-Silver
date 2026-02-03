@@ -1,3 +1,4 @@
+
 import express from 'express'
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -46,3 +47,16 @@ app.get('/api/query', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+=======
+import express from 'express'
+
+const app = express()
+
+app.get('/', (req, res) => {
+  res.send('Hello World')
+})
+
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000')
+})
+>>>>>>> a06b8fcd49c356e9cd51d67fbaad6d68d4f74d6d
