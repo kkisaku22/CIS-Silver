@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(join(__dirname, 'public')));
-app.use(express.json()); 
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('did it work??????????')
@@ -25,12 +25,12 @@ app.get('/barry', (req, res) => {
     readFile(join(__dirname, 'public', 'barry.html')git pull origin main, 'utf8')
       .then(html => {
         // Replace a placeholder in the HTML (e.g., {{myVar}})
-        const injectedHtml = html.replace('{{myVar}}', myVar);
-        res.send(injectedHtml);
+    const injectedHtml = html.replace('{{myVar}}', myVar);
+    res.send(injectedHtml);
       })
       .catch(err => {
-        res.status(500).send('Error loading page');
-      });
+    res.status(500).send('Error loading page');
+});
 })
 
 app.get('/api/barry', (req, res) => {
@@ -47,7 +47,7 @@ app.get('/api/query', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-=======
+
 import express from 'express'
 
 const app = express()
@@ -59,4 +59,4 @@ app.get('/', (req, res) => {
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000')
 })
->>>>>>> a06b8fcd49c356e9cd51d67fbaad6d68d4f74d6d
+
