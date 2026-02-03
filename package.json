@@ -1,0 +1,24 @@
+{
+  "name": "cis-silver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kkisaku22/CIS-Silver.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/kkisaku22/CIS-Silver/issues"
+  },
+  "homepage": "https://github.com/kkisaku22/CIS-Silver#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
