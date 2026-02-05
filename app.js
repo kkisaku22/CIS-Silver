@@ -23,16 +23,16 @@ app.get('/barry', (req, res) => {
 })
 
 app.get('/barry', (req, res) => {
-  // Inject a server variable into barry.html
-  readFile(join(__dirname, 'public', 'barry.html'), 'utf8')
-    .then(html => {
-      // Replace a placeholder in the HTML (e.g., {{myVar}})
-      const injectedHtml = html.replace('{{myVar}}', myVar);
-      res.send(injectedHtml);
-    })
-    .catch(err => {
-      res.status(500).send('Error loading page');
-    });
+    // Inject a server variable into barry.html
+    readFile(join(__dirname, 'public', 'barry.html'), 'utf8')
+      .then(html => {
+        // Replace a placeholder in the HTML (e.g., {{myVar}})
+        const injectedHtml = html.replace('{{myVar}}', myVar);
+        res.send(injectedHtml);
+      })
+      .catch(err => {
+        res.status(500).send('Error loading page');
+      });
 })
 
 app.get('/api/barry', (req, res) => {
