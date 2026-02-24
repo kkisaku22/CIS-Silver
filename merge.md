@@ -1,7 +1,8 @@
+# merge from create branch 3 to main
 # Merge Details
 
 ## Description
-This commit includes the addition of all my code to this project. 
+This commit includes the addition of all my code to this project and my application . 
 
 ## Personal Info
 - **Name:** Karel Kisaku
@@ -12,4 +13,4 @@ I added this file to document the contribution and outline my project work for t
 
 Looking forward to further updates and collaboration!
 
-Added my code to this existing code. - Karel Kisaku
+Added my code to this existing code. - Karel Kisaku olubwa
