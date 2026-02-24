@@ -1,16 +1,17 @@
+# Merge Details of the application and my new branch 
 # merge from create branch 3 to main
 # Merge Details
 
 ## Description
-This commit includes the addition of all my code to this project and my application . 
+This commit includes the addition of all my code to this project and mmy app . 
 
 ## Personal Info
 - **Name:** Karel Kisaku
 - **Class:** CIS 486
 
 ## Purpose
-I added this file to document the contribution and outline my project work for the course. This marks the final code integration into the project.
+I added this file to document the contribution and outline my project work for the course. This marks the final code integration into the project and my application .
 
 Looking forward to further updates and collaboration!
 
-Added my code to this existing code. - Karel Kisaku olubwa
+Added my code to this existing code. - Karel Kisaku olulu mokambi
