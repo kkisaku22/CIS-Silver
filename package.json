@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/kkisaku22/CIS-Silver#readme",
   "dependencies": {
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongodb": "^7.1.0",
     "nodemon": "^3.1.11"

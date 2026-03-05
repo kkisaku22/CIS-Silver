@@ -1,30 +1,26 @@
-
-//app.mjs
-//we are in ES6, use this. 
-import 'dotenv/config'; 
+import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFile } from 'fs/promises';  // For async file reading
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
-
-//const { MongoClient, ServerApiVersion } = require('mongodb');
-
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uri = process.env.MONGO_URI;  
-const myVar = 'injected from server'; // Declare your variable
 
+const PORT = process.env.PORT || 3000;
+const uri = process.env.MONGO_URI;
 
+if (!uri) {
+  console.error("❌ MONGO_URI missing");
+  process.exit(1);
+}
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(join(__dirname, 'public')));
-app.use(express.json()); 
 
-
-
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// Mongo Client
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -33,208 +29,119 @@ const client = new MongoClient(uri, {
   }
 });
 
-async function connectToMongo() {
+async function connectDB() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.log("✅ MongoDB Connected");
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
   }
 }
-connectToMongo();
+connectDB();
 
 
-// middlewares aka endpoints aka 'get to slash' {http verb} to slash {you name ur endpoint}
+
+// SPA
 app.get('/', (req, res) => {
-  // res.send('Hello Express'); //string response
-  // res.sendFile('index.html'); // <- this don't work w/o imports, assign, and arguements
-  res.sendFile(join(__dirname, 'public', 'attend.html')) ;
+  res.sendFile(join(__dirname, 'public', 'index.html'));
+});
 
-})
-
-app.get('/inject', (req, res) => {
-  // Inject a server variable into barry.html: templating view like ejs or pug
-  readFile(join(__dirname, 'public', 'index.html'), 'utf8')
-    .then(html => {
-      // Replace a placeholder in the HTML (e.g., {{myVar}})
-      const injectedHtml = html.replace('{{myVar}}', myVar);
-      res.send(injectedHtml);
-    })
-    .catch(err => {
-      res.status(500).send('Error loading page');
-    });
-})
-
-// API Health/Endpoints Documentation
+// Health
 app.get('/api/health', (req, res) => {
-  const endpoints = [
-    {
-      method: 'GET',
-      path: '/',
-      description: 'Serve the main HTML page'
-    },
-    {
-      method: 'GET',
-      path: '/inject',
-      description: 'Serve HTML with server-side variable injection'
-    },
-    {
-      method: 'GET',
-      path: '/api/health',
-      description: 'Show all available API endpoints'
-    },
-    {
-      method: 'GET',
-      path: '/api/class',
-      description: 'Get class information (course details)'
-    },
-    {
-      method: 'POST',
-      path: '/api/attendance',
-      description: 'CREATE - Add new student attendance record',
-      bodyExample: {
-        studentName: 'John Doe',
-        date: 'February 3, 2026',
-        keyword: 'devops'
-      }
-    },
-    {
-      method: 'GET',
-      path: '/api/attendance',
-      description: 'READ - Get all attendance records'
-    },
-    {
-      method: 'PUT',
-      path: '/api/attendance/:id',
-      description: 'UPDATE - Update existing attendance record',
-      bodyExample: {
-        studentName: 'Jane Doe',
-        date: 'February 3, 2026',
-        keyword: 'mongodb'
-      }
-    },
-    {
-      method: 'DELETE',
-      path: '/api/attendance/:id',
-      description: 'DELETE - Remove attendance record'
-    }
-  ];
-
-  res.json({
-    status: 'healthy',
-    server: 'CIS 486 DevOps Server',
-    timestamp: new Date().toISOString(),
-    endpoints: endpoints
+  res.status(200).json({
+    status: "healthy",
+    app: "Budget Tracker",
+    author: "Karel Kisaku"
   });
 });
 
-// Class Information API
-app.get('/api/class', (req, res) => {
-  const classInfo = {
-    courseNumber: 'CIS 486',
-    courseName: 'Projects in IS',
-    nickname: 'Full Stack DevOps',
-    semester: 'Spring 2026',
-    calendar: 'Class calendar coming soon!'
-  };
-  res.json(classInfo);
-});
 
-// CRUD Operations for Attendance
-
-// CREATE - Add student attendance
-app.post('/api/attendance', async (req, res) => {
+app.post('/api/expenses', async (req, res) => {
   try {
-    const { studentName, date, keyword } = req.body;
-    
-    if (!studentName || !date || !keyword) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const { description, amount, category, date } = req.body;
+
+    if (!description || !amount || !category || !date) {
+      return res.status(400).json({ error: "All fields required" });
     }
 
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const attendanceRecord = {
-      studentName,
-      date,
-      keyword,
-      timestamp: new Date()
-    };
-    
-    const result = await collection.insertOne(attendanceRecord);
-    res.json({ message: 'Attendance recorded!', id: result.insertedId });
-  } catch (error) {
-    console.error('Error creating attendance:', error);
-    res.status(500).json({ error: 'Failed to record attendance' });
+    const result = await client
+      .db('budgetApp')
+      .collection('expenses')
+      .insertOne({
+        description,
+        amount: parseFloat(amount),
+        category,
+        date,
+        createdAt: new Date()
+      });
+
+    res.status(201).json({ message: "Expense added", id: result.insertedId });
+
+  } catch (err) {
+    res.status(500).json({ error: "Create failed" });
   }
 });
 
-// READ - Get all attendance records
-app.get('/api/attendance', async (req, res) => {
+// READ
+app.get('/api/expenses', async (req, res) => {
   try {
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const records = await collection.find({}).toArray();
-    res.json(records);
-  } catch (error) {
-    console.error('Error reading attendance:', error);
-    res.status(500).json({ error: 'Failed to get attendance records' });
+    const expenses = await client
+      .db('budgetApp')
+      .collection('expenses')
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json(expenses);
+
+  } catch (err) {
+    res.status(500).json({ error: "Read failed" });
   }
 });
 
-// UPDATE - Update attendance record
-app.put('/api/attendance/:id', async (req, res) => {
+// UPDATE
+app.put('/api/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { studentName, date, keyword } = req.body;
-    
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const result = await collection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { studentName, date, keyword, updatedAt: new Date() } }
-    );
-    
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    
-    res.json({ message: 'Attendance updated!' });
-  } catch (error) {
-    console.error('Error updating attendance:', error);
-    res.status(500).json({ error: 'Failed to update attendance' });
+    const { description, amount, category, date } = req.body;
+
+    const result = await client
+      .db('budgetApp')
+      .collection('expenses')
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { description, amount: parseFloat(amount), category, date, updatedAt: new Date() } }
+      );
+
+    if (!result.matchedCount)
+      return res.status(404).json({ error: "Expense not found" });
+
+    res.status(200).json({ message: "Expense updated" });
+
+  } catch (err) {
+    res.status(500).json({ error: "Update failed" });
   }
 });
 
-// DELETE - Delete attendance record
-app.delete('/api/attendance/:id', async (req, res) => {
+// DELETE
+app.delete('/api/expenses/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
-    
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    
-    res.json({ message: 'Attendance deleted!' });
-  } catch (error) {
-    console.error('Error deleting attendance:', error);
-    res.status(500).json({ error: 'Failed to delete attendance' });
+    const result = await client
+      .db('budgetApp')
+      .collection('expenses')
+      .deleteOne({ _id: new ObjectId(req.params.id) });
+
+    if (!result.deletedCount)
+      return res.status(404).json({ error: "Expense not found" });
+
+    res.status(200).json({ message: "Expense deleted" });
+
+  } catch (err) {
+    res.status(500).json({ error: "Delete failed" });
   }
 });
 
-
-
-//start the server. 
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000')
-})
+app.listen(PORT, () => {
+  console.log(`🚀 Budget Tracker running on port ${PORT}`);
+});
