@@ -44,7 +44,7 @@ connectDB();
 
 // SPA
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'index.html'));
+  res.sendFile(join(__dirname, 'public', 'miniApp.html'));
 });
 
 // Health
