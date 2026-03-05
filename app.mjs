@@ -1,3 +1,4 @@
+// app.mjs
 import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
@@ -12,10 +13,11 @@ const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
-  console.error("❌ MONGO_URI missing");
+  console.error("❌ MONGO_URI missing in .env");
   process.exit(1);
 }
 
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(join(__dirname, 'public')));
@@ -29,54 +31,62 @@ const client = new MongoClient(uri, {
   }
 });
 
+// Connect to Mongo
 async function connectDB() {
   try {
     await client.connect();
+    await client.db("admin").command({ ping: 1 });
     console.log("✅ MongoDB Connected");
   } catch (err) {
-    console.error(err);
+    console.error("MongoDB connection error:", err);
     process.exit(1);
   }
 }
 connectDB();
 
+// =======================
+// ROUTES
+// =======================
 
-
-// SPA
+// Serve miniApp.html
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'miniApp.html'));
 });
 
-// Health
+// Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: "healthy",
-    app: "Budget Tracker",
+    app: "Mini Budget Tracker",
     author: "Karel Kisaku"
   });
 });
 
+// =======================
+// CRUD ROUTES
+// =======================
 
-app.post('/api/expenses', async (req, res) => {
+// CREATE
+app.post('/api/items', async (req, res) => {
   try {
-    const { description, amount, category, date } = req.body;
+    const { title, amount, category, date } = req.body;
 
-    if (!description || !amount || !category || !date) {
+    if (!title || !amount || !category || !date) {
       return res.status(400).json({ error: "All fields required" });
     }
 
     const result = await client
-      .db('budgetApp')
-      .collection('expenses')
+      .db('miniAppDB')
+      .collection('items')
       .insertOne({
-        description,
+        title,
         amount: parseFloat(amount),
         category,
         date,
         createdAt: new Date()
       });
 
-    res.status(201).json({ message: "Expense added", id: result.insertedId });
+    res.status(201).json({ message: "Item created", id: result.insertedId });
 
   } catch (err) {
     res.status(500).json({ error: "Create failed" });
@@ -84,16 +94,16 @@ app.post('/api/expenses', async (req, res) => {
 });
 
 // READ
-app.get('/api/expenses', async (req, res) => {
+app.get('/api/items', async (req, res) => {
   try {
-    const expenses = await client
-      .db('budgetApp')
-      .collection('expenses')
+    const items = await client
+      .db('miniAppDB')
+      .collection('items')
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
 
-    res.status(200).json(expenses);
+    res.status(200).json(items);
 
   } catch (err) {
     res.status(500).json({ error: "Read failed" });
@@ -101,23 +111,23 @@ app.get('/api/expenses', async (req, res) => {
 });
 
 // UPDATE
-app.put('/api/expenses/:id', async (req, res) => {
+app.put('/api/items/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, amount, category, date } = req.body;
+    const { title, amount, category, date } = req.body;
 
     const result = await client
-      .db('budgetApp')
-      .collection('expenses')
+      .db('miniAppDB')
+      .collection('items')
       .updateOne(
         { _id: new ObjectId(id) },
-        { $set: { description, amount: parseFloat(amount), category, date, updatedAt: new Date() } }
+        { $set: { title, amount: parseFloat(amount), category, date, updatedAt: new Date() } }
       );
 
     if (!result.matchedCount)
-      return res.status(404).json({ error: "Expense not found" });
+      return res.status(404).json({ error: "Item not found" });
 
-    res.status(200).json({ message: "Expense updated" });
+    res.status(200).json({ message: "Item updated" });
 
   } catch (err) {
     res.status(500).json({ error: "Update failed" });
@@ -125,17 +135,17 @@ app.put('/api/expenses/:id', async (req, res) => {
 });
 
 // DELETE
-app.delete('/api/expenses/:id', async (req, res) => {
+app.delete('/api/items/:id', async (req, res) => {
   try {
     const result = await client
-      .db('budgetApp')
-      .collection('expenses')
+      .db('miniAppDB')
+      .collection('items')
       .deleteOne({ _id: new ObjectId(req.params.id) });
 
     if (!result.deletedCount)
-      return res.status(404).json({ error: "Expense not found" });
+      return res.status(404).json({ error: "Item not found" });
 
-    res.status(200).json({ message: "Expense deleted" });
+    res.status(200).json({ message: "Item deleted" });
 
   } catch (err) {
     res.status(500).json({ error: "Delete failed" });
@@ -143,5 +153,5 @@ app.delete('/api/expenses/:id', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Budget Tracker running on port ${PORT}`);
+  console.log(`🚀 MiniApp running on port ${PORT}`);
 });
