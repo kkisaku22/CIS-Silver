@@ -39,11 +39,9 @@ jobs:
           ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<'EOF'
 set -e
 Check failure on line 41 in .github/workflows/deploy-main-to-gcp.yml
-
 GitHub Actions
 / .github/workflows/deploy-main-to-gcp.yml
 Invalid workflow file
-
 You have an error in your yaml syntax on line 41
 cd "$APP_DIR"
 # Make sure we are on miniApp branch and up to date
