@@ -1,8 +1,8 @@
-name: deploy-main-to-gcp.yml
+name: deploy-miniApp-to-gcp.yml
 
 on:
   push:
-    branches: [main]
+    branches: [miniApp]   # deploys when miniApp branch is pushed
   workflow_dispatch:
 
 jobs:
@@ -23,22 +23,28 @@ jobs:
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy over SSH
+      - name: Deploy miniApp over SSH
         shell: bash
         env:
-          SSH_USER:karelkis23 #${{ secrets.SSH_USER }}
-          SSH_HOST:35.222.111.208 #${{ secrets.SSH_HOST }}
-          APP_DIR:app  #${{ vars.APP_DIR }}
-          PM2_NAME:app #${{ vars.PM2_NAME }}
+          SSH_USER: karelkis23
+          SSH_HOST: 35.222.111.208
+          APP_DIR: app       # your existing app folder
+          PM2_NAME: app      # PM2 process name
         run: |
-          ssh -i ~/.ssh/id_rsa  "$SSH_USER@$SSH_HOST" <<EOF
+          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<EOF
             set -e
 
             cd "$APP_DIR"
 
-            git pull
+            # Make sure local app folder matches miniApp branch
+            git fetch origin
+            git checkout miniApp
+            git reset --hard origin/miniApp
+
+            # Install dependencies
             npm ci
 
+            # Restart PM2
             pm2 delete "$PM2_NAME" || true
             pm2 start -f app.mjs --name "$PM2_NAME"
 
