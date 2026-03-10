@@ -1,8 +1,8 @@
-name: deploy-miniApp-to-gcp.yml
+name: deploy-miniApp-to-gcp
 
 on:
   push:
-    branches: [miniApp]  # triggers when miniApp branch is pushed
+    branches: [miniApp]
   workflow_dispatch:
 
 jobs:
@@ -15,22 +15,20 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy miniApp over SSH
+      - name: Deploy over SSH
         shell: bash
         env:
           SSH_USER: karelkis23
           SSH_HOST: 35.222.111.208
-          APP_DIR: app
-          PM2_NAME: app
+          APP_DIR: app        # your app directory on VM
+          PM2_NAME: app       # process name for PM2
         run: |
-          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<EOF
+          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" << 'EOF'
             set -e
 
             cd "$APP_DIR"
