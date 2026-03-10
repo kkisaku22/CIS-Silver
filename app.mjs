@@ -9,7 +9,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000; // fixed port
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
@@ -44,13 +44,9 @@ async function connectDB() {
 }
 connectDB();
 
-// =======================
-// ROUTES
-// =======================
-
 // Serve miniApp.html
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'miniApp.html'));
+  res.sendFile(join(__dirname, 'public', 'miniAPP.html'));
 });
 
 // Health Check
@@ -61,10 +57,6 @@ app.get('/api/health', (req, res) => {
     author: "Karel Kisaku"
   });
 });
-
-// =======================
-// CRUD ROUTES
-// =======================
 
 // CREATE
 app.post('/api/items', async (req, res) => {
@@ -152,6 +144,7 @@ app.delete('/api/items/:id', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
-  console.log(`🚀 MiniApp running on port ${PORT}`);
+  console.log(`MiniApp is running on http://localhost:${PORT}`);
 });
