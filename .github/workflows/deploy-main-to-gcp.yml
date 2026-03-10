@@ -10,36 +10,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # needed for git reset --hard
+
       - name: Prepare SSH
         shell: bash
+        env:
+          SSH_HOST: 35.222.111.208      # your GCP VM external IP
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+
+          # Add private key from GitHub secrets
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          # Add VM to known hosts
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy over SSH
         shell: bash
         env:
-          SSH_USER: karelkis23
-          SSH_HOST: 35.222.111.208
-          APP_DIR: app        # your app directory on VM
-          PM2_NAME: app       # process name for PM2
+          SSH_USER: karelkis23      # your VM username
+          SSH_HOST: 35.222.111.208  # your GCP VM external IP
+          APP_DIR: app              # folder on VM where your miniApp lives
+          PM2_NAME: app             # PM2 process name
         run: |
-          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" << 'EOF'
+          ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<EOF
             set -e
 
             cd "$APP_DIR"
 
+            # Make sure we are on miniApp branch and up to date
             git fetch origin
             git checkout miniApp
             git reset --hard origin/miniApp
 
+            # Install dependencies
             npm ci
 
+            # Restart PM2 process
             pm2 delete "$PM2_NAME" || true
             pm2 start -f app.mjs --name "$PM2_NAME"
             pm2 save
-          EOF
+EOF
