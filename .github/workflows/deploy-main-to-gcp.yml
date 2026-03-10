@@ -37,23 +37,23 @@ jobs:
           APP_DIR: app
           PM2_NAME: app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" << EOF
-set -euo pipefail
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" bash << 'EOF'
+            set -euo pipefail
 
-cd "$APP_DIR"
+            cd "$APP_DIR"
 
-# Ensure we are on the correct branch
-git fetch origin
-git checkout miniApp
-git reset --hard origin/miniApp
+            # Ensure we are on the correct branch
+            git fetch origin
+            git checkout miniApp
+            git reset --hard origin/miniApp
 
-# Install dependencies cleanly
-npm ci
+            # Install dependencies cleanly
+            npm ci
 
-# Restart PM2 process safely
-if pm2 list | grep -q "$PM2_NAME"; then
-  pm2 delete "$PM2_NAME"
-fi
-pm2 start -f app.mjs --name "$PM2_NAME"
-pm2 save
-EOF
+            # Restart PM2 process safely
+            if pm2 list | grep -q "$PM2_NAME"; then
+              pm2 delete "$PM2_NAME"
+            fi
+            pm2 start -f app.mjs --name "$PM2_NAME"
+            pm2 save
+          EOF
