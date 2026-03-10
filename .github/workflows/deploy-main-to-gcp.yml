@@ -40,7 +40,6 @@ jobs:
 set -e
 Check failure on line 41 in .github/workflows/deploy-main-to-gcp.yml
 
-
 GitHub Actions
 / .github/workflows/deploy-main-to-gcp.yml
 Invalid workflow file
