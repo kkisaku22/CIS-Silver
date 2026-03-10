@@ -52,7 +52,7 @@
         </div>
 
         <div class="col-md-2">
-          <button type="submit" class="btn btn-primary w-100">Add Item</button>
+          <button type="submit" class="btn btn-primary w-100" id="submitBtn">Add Item</button>
         </div>
       </div>
     </form>
@@ -77,13 +77,12 @@
 
       $(".datepicker").datepicker({ dateFormat: 'yy-mm-dd' });
 
+      let editingId = null; // Track if we are editing an item
+
       const loadItems = () => {
         $.get("/api/items", data => {
-
           const list = $("#itemsList").empty();
-
           data.forEach(item => {
-
             list.append(`
               <div class="list-group-item d-flex justify-content-between align-items-center">
 
@@ -94,22 +93,25 @@
                   - ${item.date}
                 </div>
 
-                <button class="btn btn-sm btn-danger deleteBtn" data-id="${item._id}">
-                  Delete
-                </button>
+                <div>
+                  <button class="btn btn-sm btn-warning editBtn" data-id="${item._id}" data-title="${item.title}" data-amount="${item.amount}" data-category="${item.category}" data-date="${item.date}">
+                    Edit
+                  </button>
+                  <button class="btn btn-sm btn-danger deleteBtn" data-id="${item._id}">
+                    Delete
+                  </button>
+                </div>
 
               </div>
             `);
-
           });
-
         });
       };
 
       loadItems();
 
+      // Submit form for add or update
       $("#itemForm").submit(function(e){
-
         e.preventDefault();
 
         const payload = {
@@ -119,26 +121,47 @@
           date: $("#date").val()
         };
 
-        $.post("/api/items", payload, () => {
-
-          loadItems();
-
-          $(this).trigger("reset");
-
-        });
-
+        if (editingId) {
+          // UPDATE
+          $.ajax({
+            url: `/api/items/${editingId}`,
+            type: "PUT",
+            data: JSON.stringify(payload),
+            contentType: "application/json",
+            success: () => {
+              loadItems();
+              $(this).trigger("reset");
+              editingId = null;
+              $("#submitBtn").text("Add Item");
+            }
+          });
+        } else {
+          // CREATE
+          $.post("/api/items", payload, () => {
+            loadItems();
+            $(this).trigger("reset");
+          });
+        }
       });
 
+      // DELETE
       $("#itemsList").on("click", ".deleteBtn", function(){
-
         const id = $(this).data("id");
-
         $.ajax({
           url: `/api/items/${id}`,
           type: "DELETE",
           success: loadItems
         });
+      });
 
+      // EDIT
+      $("#itemsList").on("click", ".editBtn", function(){
+        editingId = $(this).data("id");
+        $("#title").val($(this).data("title"));
+        $("#amount").val($(this).data("amount"));
+        $("#category").val($(this).data("category"));
+        $("#date").val($(this).data("date"));
+        $("#submitBtn").text("Update Item");
       });
 
     });
