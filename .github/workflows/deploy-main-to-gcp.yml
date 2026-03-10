@@ -37,7 +37,7 @@ jobs:
           APP_DIR: app
           PM2_NAME: app
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" bash << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" bash << EOF
             set -euo pipefail
 
             cd "$APP_DIR"
