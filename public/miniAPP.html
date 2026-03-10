@@ -2,98 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Budget App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Budget Tracker</title>
 
-  <!-- normalize -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-
-  <!-- Bootstrap -->
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- jQuery UI CSS -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
 </head>
+<body>
+  <div class="container my-5">
+    <h1 class="text-center mb-4">Mini Budget Tracker</h1>
 
-<body class="bg-light">
-
-<div class="container mt-5">
-  <h1 class="text-center">💰 Mini Budget App</h1>
-  <p class="text-center">By Karel Kisaku</p>
-
-  <div class="card p-4 shadow">
-    <form id="itemForm">
-      <input type="hidden" id="editId">
-
-      <input class="form-control mb-2" id="title" placeholder="Title" required>
-      <input class="form-control mb-2" id="amount" type="number" placeholder="Amount" required>
-      <input class="form-control mb-2" id="category" placeholder="Category" required>
-      <input class="form-control mb-3" id="date" type="date" required>
-
-      <button class="btn btn-primary w-100">Save Item</button>
+    <form id="itemForm" class="mb-4">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" class="form-control" placeholder="Title" id="title">
+        </div>
+        <div class="col-md-2">
+          <input type="number" class="form-control" placeholder="Amount" id="amount">
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" placeholder="Category" id="category">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control datepicker" placeholder="Date" id="date">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Add Item</button>
+        </div>
+      </div>
     </form>
+
+    <div id="itemsList" class="list-group"></div>
   </div>
 
-  <div class="mt-4" id="itemList"></div>
-</div>
+  <!-- jQuery & jQuery UI -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
-<script>
-let editingId = null;
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-async function loadItems() {
-  const res = await fetch('/api/items');
-  const data = await res.json();
+  <script>
+    $(function(){
+      $(".datepicker").datepicker({ dateFormat: 'yy-mm-dd' });
 
-  $('#itemList').html(data.map(item => `
-    <div class="card mt-2 shadow-sm">
-      <div class="card-body">
-        <h5>${item.title}</h5>
-        <p>$${item.amount} | ${item.category} | ${item.date}</p>
-        <button class="btn btn-warning btn-sm" onclick="editItem('${item._id}', '${item.title}', '${item.amount}', '${item.category}', '${item.date}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteItem('${item._id}')">Delete</button>
-      </div>
-    </div>
-  `));
-}
+      const loadItems = () => {
+        $.get("/api/items", data => {
+          const list = $("#itemsList").empty();
+          data.forEach(item => {
+            list.append(`<div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${item.title}</strong> - ${item.amount} (${item.category}) - ${item.date}
+              </div>
+              <button class="btn btn-sm btn-danger deleteBtn" data-id="${item._id}">Delete</button>
+            </div>`);
+          });
+        });
+      };
 
-$('#itemForm').submit(async function(e){
-  e.preventDefault();
+      loadItems();
 
-  const item = {
-    title: $('#title').val(),
-    amount: $('#amount').val(),
-    category: $('#category').val(),
-    date: $('#date').val()
-  };
+      $("#itemForm").submit(function(e){
+        e.preventDefault();
+        const payload = {
+          title: $("#title").val(),
+          amount: $("#amount").val(),
+          category: $("#category").val(),
+          date: $("#date").val()
+        };
+        $.post("/api/items", payload, () => {
+          loadItems();
+          $(this).trigger("reset");
+        });
+      });
 
-  const url = editingId ? `/api/items/${editingId}` : '/api/items';
-  const method = editingId ? 'PUT' : 'POST';
-
-  await fetch(url, {
-    method,
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(item)
-  });
-
-  this.reset();
-  editingId = null;
-  loadItems();
-});
-
-function editItem(id, title, amount, category, date){
-  editingId = id;
-  $('#title').val(title);
-  $('#amount').val(amount);
-  $('#category').val(category);
-  $('#date').val(date);
-}
-
-async function deleteItem(id){
-  await fetch(`/api/items/${id}`, { method: 'DELETE' });
-  loadItems();
-}
-
-loadItems();
-</script>
-
+      $("#itemsList").on("click", ".deleteBtn", function(){
+        const id = $(this).data("id");
+        $.ajax({
+          url: `/api/items/${id}`,
+          type: "DELETE",
+          success: loadItems
+        });
+      });
+    });
+  </script>
 </body>
 </html>
