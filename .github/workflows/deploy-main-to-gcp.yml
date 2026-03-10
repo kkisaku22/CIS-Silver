@@ -2,59 +2,50 @@ name: deploy-miniApp-to-gcp
 
 on:
   push:
-    branches: [miniApp]  # deploy when miniApp branch is pushed
-  workflow_dispatch:      # allow manual trigger
+    branches: [miniApp]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repository
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # needed for git reset --hard
 
-      # 2️⃣ Prepare SSH
       - name: Prepare SSH
         shell: bash
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}  # your GCP VM external IP
+          SSH_HOST: 35.222.111.208      # your GCP VM external IP
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
           # Add private key from GitHub secrets
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
           # Add VM to known hosts
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # 3️⃣ Deploy app over SSH
       - name: Deploy over SSH
         shell: bash
         env:
-          SSH_USER: ${{ secrets.SSH_USER }}   # VM username
-          SSH_HOST: ${{ secrets.SSH_HOST }}   # VM external IP
-          APP_DIR: app                         # folder on VM where your miniApp lives
-          PM2_NAME: app                        # PM2 process name
+          SSH_USER: karelkis23      # your VM username
+          SSH_HOST: 35.222.111.208  # your GCP VM external IP
+          APP_DIR: app              # folder on VM where your miniApp lives
+          PM2_NAME: app             # PM2 process name
         run: |
           ssh -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<'EOF'
             set -e
-
             cd "$APP_DIR"
-
             # Make sure we are on miniApp branch and up to date
             git fetch origin
             git checkout miniApp
             git reset --hard origin/miniApp
-
             # Install dependencies
             npm ci
-
             # Restart PM2 process
             pm2 delete "$PM2_NAME" || true
             pm2 start -f app.mjs --name "$PM2_NAME"
