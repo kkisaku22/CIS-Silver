@@ -18,7 +18,7 @@ jobs:
       - name: Prepare SSH
         shell: bash
         env:
-          SSH_HOST: 35.222.111.208
+          SSH_HOST: 34.16.219.95
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -33,7 +33,7 @@ jobs:
         shell: bash
         env:
           SSH_USER: karelkis23
-          SSH_HOST: 35.222.111.208
+          SSH_HOST: 34.16.219.95
           APP_DIR: app
           PM2_NAME: app
         run: |
